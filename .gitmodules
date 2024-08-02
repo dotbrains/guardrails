@@ -1,0 +1,18 @@
+[submodule "submodules/travis-shared-config"]
+	path = submodules/travis-shared-config
+	url = https://github.com/dotbrains/travis-shared-config
+[submodule "submodules/contrast-security-sast-travis-integration"]
+	path = submodules/contrast-security-sast-travis-integration
+	url = https://github.com/dotbrains/contrast-security-sast-travis-integration
+[submodule "submodules/create-tagged-releases"]
+	path = submodules/create-tagged-releases
+	url = https://github.com/dotbrains/create-tagged-releases
+[submodule "submodules/base-images-blueprint"]
+	path = submodules/base-images-blueprint
+	url = https://github.com/dotbrains/base-images-blueprint
+[submodule "submodules/boilerplate-technical-documentation"]
+	path = submodules/boilerplate-technical-documentation
+	url = https://github.com/dotbrains/boilerplate-technical-documentation
+[submodule "submodules/appscan-sast-travis-integration"]
+	path = submodules/appscan-sast-travis-integration
+	url = https://github.com/dotbrains/appscan-sast-travis-integration

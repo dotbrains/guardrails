@@ -1,0 +1,40 @@
+server:
+  port: ${PORT:8080}
+  servlet:
+    context-path: /
+  ssl:
+    key-store: classpath:keystore/KEY_STORE.jks
+    key-store-password: ${KEYSTORE_PASSWORD}
+    key-store-type: JKS
+    key-store-provider: SUN
+    key-alias: 1
+    trust-store: classpath:keystore/TRUST_STORE.jks
+    trust-store-password: ${TRUSTSTORE_PASSWORD}
+    trust-store-type: JKS
+    trust-store-provider: SUN
+    enabled: ${SSL_ENABLED:false}
+
+spring:
+  application:
+    name: @project.name@
+    description: @project.description@
+    version: @project.version@
+
+  servlet:
+    multipart:
+      enabled: true
+      max-file-size: ${MAX_FILE_SIZE}
+      max-request-size: ${MAX_REQUEST_SIZE}
+      file-size-threshold: 0B
+      location: ${java.io.tmpdir}
+      resolve-lazily: false
+
+logging:
+  level:
+    root: INFO
+    com.dotbrains.service: ${SERVICE_LOG_LEVEL:INFO}
+    org.springframework.web: INFO
+
+application:
+  web-security:
+    cors-allowed-origins: ${CORS_ALLOWED_ORIGINS}

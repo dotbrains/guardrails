@@ -1,0 +1,38 @@
+version: '3.8'
+
+networks:
+  test:
+    name: test
+
+x-build-args: &build_args
+  ARTIFACTORY_API_KEY: ${ARTIFACTORY_API_KEY}
+
+x-node-vars: &node_vars
+  SERVICE_URL: ${SERVICE_URL}
+  SSL_ENABLED: ${SSL_ENABLED}
+
+x-contrast-vars: &contrast_vars
+    CONTRAST__ENABLE: ${CONTRAST__ENABLE:-false}
+    CONTRAST__API__URL: ${CONTRAST__API__URL}
+    CONTRAST__API__API_KEY: ${CONTRAST__API__API_KEY}
+    CONTRAST__API__SERVICE_KEY: ${CONTRAST__API__SERVICE_KEY}
+    CONTRAST__API__USER_NAME: ${CONTRAST__API__USER_NAME}
+
+services:
+  front-end:
+    build:
+      context: .
+      args:
+        <<: *build_args
+    container_name: front-end
+    hostname: front-end
+    image: front-end:latest
+    networks:
+      - test
+    ports:
+      - "3000:3000"
+    environment:
+      <<: *node_vars
+      <<: *vite_vars
+      <<: *contrast_vars
+    user: "1001:0"

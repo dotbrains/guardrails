@@ -1,0 +1,86 @@
+sudo: required
+dist: focal
+group: beta
+language: shell
+
+services:
+  - docker
+
+branches:
+  only:
+    - development
+    - /^(main|master)$/
+    - /^\d+\.\d+(\.\d+)?(-\S*)?$/
+
+notifications:
+  email: false
+
+configs:
+  - &CONFIG
+    - REGISTRY_USER=${REGISTRY_USER}
+    - REGISTRY_PASSWORD=${REGISTRY_PASSWORD}
+    - REGISTRY_HOST=docker.io
+    - REGISTRY_NAMESPACE=${REGISTRY_NAMESPACE}
+    - REGISTRY=${REGISTRY_HOST}/${REGISTRY_NAMESPACE}
+  - &APPSCAN_CONFIG
+    - APPSCAN_API_KEY=${APPSCAN_API_KEY}
+    - APPSCAN_API_SECRET=${APPSCAN_API_SECRET}
+    - APPSCAN_APP_ID=${APPSCAN_APP_ID}
+    - APPSCAN_NAME=${TRAVIS_BRANCH}-${TRAVIS_COMMIT}
+
+install: skip
+script: skip
+
+stages:
+  - name: Detect Secrets
+    if: type = pull_request
+  - name: Static Code Analysis
+    if: type IN (pull_request, push) AND branch IN (development, main, master)
+  - name: Build
+    if: type = pull_request
+  - name: Deploy Artifacts
+
+jobs:
+  include:
+    - stage: Detect Secrets
+      cache: false
+      before_install:
+        - pip install detect-secrets
+      script:
+        - detect-secrets scan --update .secrets.baseline
+        - detect-secrets audit --report --fail-on-unaudited --fail-on-live --fail-on-audited-real --omit-instructions .secrets.baseline
+
+    - stage: Static Code Analysis
+      env:
+        - *APPSCAN_CONFIG
+      addons:
+        apt:
+          packages:
+            - jq
+      script: bash devops/appscan/appscan_sca.sh
+
+    - stage: Build
+      env:
+        - DOCKER_BUILDKIT=1
+      before_script: bash devops/docker_install.sh
+      script: docker-compose build --progress plain
+
+    - stage: Deploy Artifacts
+      env:
+        - IMAGE_NAME=java
+        - DOCKER_BUILDKIT=1
+        - *CONFIG
+      cache: false
+      before_deploy:
+        - bash devops/docker_install.sh
+        - docker-compose build --progress plain
+        - echo "$REGISTRY_PASSWORD" | docker login -u "$REGISTRY_USER" --password-stdin "$REGISTRY_HOST"
+      deploy:
+        - provider: script
+          script: bash devops/docker_push.sh ${TRAVIS_TAG}
+          on:
+            tags: true
+        - provider: script
+          script: bash devops/docker_push.sh ${TRAVIS_BRANCH}-${TRAVIS_COMMIT}
+          on:
+            branch: development

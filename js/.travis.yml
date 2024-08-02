@@ -1,0 +1,119 @@
+sudo: required
+dist: focal
+group: beta
+language: node_js
+node_js:
+  - 18
+
+services:
+  - docker
+
+branches:
+  only:
+    - development
+    - /^(main|master)$/
+    - /^\d+\.\d+(\.\d+)?(-\S*)?$/
+
+notifications:
+  email: false
+
+configs:
+  - &CONFIG
+    - REGISTRY_USER=${REGISTRY_USER}
+    - REGISTRY_PASSWORD=${REGISTRY_PASSWORD}
+    - REGISTRY_HOST=docker.io
+    - REGISTRY_NAMESPACE=${REGISTRY_NAMESPACE}
+    - REGISTRY=${REGISTRY_HOST}/${REGISTRY_NAMESPACE}
+  - &APPSCAN_CONFIG
+    - APPSCAN_API_KEY=${APPSCAN_API_KEY}
+    - APPSCAN_API_SECRET=${APPSCAN_API_SECRET}
+    - APPSCAN_APP_ID=${APPSCAN_APP_ID}
+    - APPSCAN_NAME=${TRAVIS_BRANCH}-${TRAVIS_COMMIT}
+  - &CONTRAST_CONFIG
+    - CONTRAST__API__API_KEY=${CONTRAST__API__API_KEY}
+    - CONTRAST__API__ORGANIZATION=${CONTRAST__API__ORGANIZATION}
+    - CONTRAST__API__SERVICE_KEY=${CONTRAST__API__SERVICE_KEY}
+    - CONTRAST__API__URL=https://app.contrastsecurity.com/Contrast
+    - CONTRAST__API__USER_NAME=${CONTRAST__API__USER_NAME}
+  - &ARTIFACTORY_CONFIG
+    - ARTIFACTORY_API_KEY=${ARTIFACTORY_API_KEY}
+    - ARTIFACTORY_REPO=${ARTIFACTORY_REPO}
+    - ARTIFACTORY_URL=${ARTIFACTORY_URL}
+
+cache:
+  npm: false
+  directories:
+    - "~/.pnpm-store"
+    - $(npm config get prefix)/lib/node_modules
+before_install:
+  - npm install -g pnpm@7
+  - pnpm config set store-dir ~/.pnpm-store
+  - echo "strict-peer-dependencies=false" >> .npmrc
+  - echo "//registry.npmjs.org/:_authToken=" >> .npmrc
+  - "curl -H \"Authorization: Bearer ${ARTIFACTORY_API_KEY}\"\"${ARTIFACTORY_URL}/artifactory/api/npm/${ARTIFACTORY_REPO}/auth/console\" >> .npmrc"
+
+install: skip
+script: skip
+
+stages:
+  - name: Prepare Cache
+    if: type = pull_request
+  - name: Detect Secrets
+    if: type = pull_request
+  - name: Static Code Analysis
+    if: type IN (pull_request, push) AND branch IN (development, main, master)
+  - name: Build
+    if: type = pull_request
+  - name: Deploy Artifacts
+
+jobs:
+  include:
+    - stage: Prepare Cache
+      install: pnpm install
+
+    - stage: Detect Secrets
+      cache: false
+      before_install:
+        - pip install detect-secrets
+      script:
+        - detect-secrets scan --update .secrets.baseline
+        - detect-secrets audit --report --fail-on-unaudited --fail-on-live --fail-on-audited-real --omit-instructions .secrets.baseline
+
+    - stage: Static Code Analysis
+      env:
+        - *APPSCAN_CONFIG
+      addons:
+        apt:
+          packages:
+            - jq
+      cache: false
+      before_install: false
+      script: bash devops/appscan/appscan_sca.sh
+
+    - stage: Build
+      install: pnpm install
+      script: pnpm build
+
+    - stage: Deploy Artifacts
+      env:
+        - IMAGE_NAME=front-end
+        - DOCKER_BUILDKIT=1
+        - *CONFIG
+        - *CONTRAST_CONFIG
+        - *ARTIFACTORY_CONFIG
+      install:
+        - npm install -g @contrast/agent@4.23.1
+        - pnpm install
+        - npx contrast-transpile <file.js> --assess.enable true --agent.node.rewrite_cache.enable true --agent.node.rewrite_cache.path ./rewrite_cache
+      before_deploy:
+        - echo "$REGISTRY_PASSWORD" | docker login -u "$REGISTRY_USER" --password-stdin "$REGISTRY_HOST"
+      deploy:
+        - provider: script
+          script: bash devops/docker_push.sh ${TRAVIS_TAG}
+          on:
+            tags: true
+        - provider: script
+          skip_cleanup: true
+          script: bash devops/docker_push.sh ${TRAVIS_BRANCH}-${TRAVIS_COMMIT}
+          on:
+            branch: development

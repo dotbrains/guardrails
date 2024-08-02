@@ -1,0 +1,45 @@
+version: "3.8"
+
+networks:
+  test:
+    name: test
+
+x-build-args: &build_args
+  MAVEN_USERNAME: ${MAVEN_USERNAME}
+  MAVEN_PASSWORD: ${MAVEN_PASSWORD}
+
+x-keystores: &keystores
+  TRUSTSTORE: ${TRUSTSTORE}
+  KEYSTORE: ${KEYSTORE}
+  KEYSTORE_PASSWORD: ${KEYSTORE_PASSWORD}
+  TRUSTSTORE_PASSWORD: ${TRUSTSTORE_PASSWORD}
+
+x-request-variables: &request_variables
+  MAX_FILE_SIZE: ${MAX_FILE_SIZE}
+  MAX_REQUEST_SIZE: ${MAX_REQUEST_SIZE}
+
+x-security-options: &security_options
+  CORS_ALLOWED_ORIGINS: ${CORS_ALLOWED_ORIGINS}
+
+x-misc-vars: &misc_vars
+  JAVA_TOOL_OPTIONS: ${JAVA_TOOL_OPTIONS}
+
+services:
+  kotlin-service:
+    build:
+      context: .
+      args:
+        <<: *build_args
+    image: kotlin:latest
+    container_name: kotlin-service
+    hostname: java-service
+    environment:
+      <<: *keystores
+      <<: *request_variables
+      <<: *security_options
+      <<: *misc_vars
+    networks:
+      - test
+    ports:
+      - "8080:8080"
+    user: "1001:0"
