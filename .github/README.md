@@ -19,7 +19,7 @@ This boilerplate is based on the [Gitflow](https://www.atlassian.com/git/tutoria
 - `development`: The development branch. Contains the latest development version of the project.
 - `#.#.#`: A release branch. Contains the latest version of the project for a specific release.
 
-Please see the [Gitflow](/resources/gitflow_proposal_221018.pdf) presentation for more information.
+Please see the [Gitflow](/resources/gitflow_proposal_240802.pdf) presentation for more information.
 
 ## Getting Started
 
