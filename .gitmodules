@@ -16,3 +16,6 @@
 [submodule "submodules/appscan-sast-travis-integration"]
 	path = submodules/appscan-sast-travis-integration
 	url = https://github.com/dotbrains/appscan-sast-travis-integration
+[submodule "submodules/image-signing-travis-example"]
+	path = submodules/image-signing-travis-example
+	url = https://github.com/dotbrains/image-signing-travis-example
