@@ -86,6 +86,7 @@ The following sub-projects are included in this boilerplate:
 - [contrast-security-sast-travis-integration](https://github.com/dotbrains/contrast-security-sast-travis-integration): A base project for Contrast Security SAST integration with Travis CI.
 - [create-tagged-releases](https://github.com/dotbrains/create-tagged-releases): A Python script to create tagged releases for GitHub repositories.
 - [Travis CI Shared Configurations](https://github.com/dotbrains/travis-shared-config): A set of shared configurations for Travis CI used to ensure consistency across multiple projects.
+- [Travis CI Image Signing Example](https://github.com/dotbrains/image-signing-travis-example): An example of how to sign images in Travis CI.
 - [java](java): A base project for Java projects
 - [kotlin](kotlin): A base project for Kotlin projects
 - [js](js): A base project for JavaScript projects
